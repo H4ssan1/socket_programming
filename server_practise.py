@@ -3,7 +3,7 @@ import os
 import sys
 serv=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-host="127.0.0.1"
+host="192.168.0.89"
 port= 12000 
 serv.bind((host,port))
 serv.listen(2)
