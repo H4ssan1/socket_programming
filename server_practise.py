@@ -19,7 +19,16 @@ while True:
     print("response is:"+content)
     ret = input("enter response\n")
     if ret == "close":
-        print("connection is over") 
+        print("connection is over")
+
+
+
+
+
+
+
+        
+         
         break
     client_socket.send(ret.encode())
     print("waiting for response...\n")
