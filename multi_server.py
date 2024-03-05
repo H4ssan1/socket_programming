@@ -30,18 +30,27 @@ def client_handler(con, addr):
             print(f"[{addr}] {msg}")
         con.send("Message received".encode(format))
 
+    
     con.close()
+    
 
 
 def start():
+    running = True
     server.listen()
     print(f"[LISTENING] Server is listening on {host}")
-    while True:
+    while (running):
+        close_app = input("Stop the server? (y/n)\n")
+        if close_app == "y":
+            break
+        else:
+            print("################################")
+            print("Finding connection...")
         conn, addr = server.accept()
         thread = threading.Thread(target=client_handler, args=(conn, addr))
         thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
-
+        print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
+        
 
 print("[STARTING] server is starting...")
 start()

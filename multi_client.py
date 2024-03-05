@@ -4,10 +4,12 @@ import socket
 port = 12000
 header = 64
 format = 'UTF-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
+disconnect = "!break"
+name = "john"
 # Whatever IP address you found from running ifconfig in terminal.
 # SERVER = ""
 ip = "192.168.0.72"
+message_to_send = ""
 
 ADDR = (ip, port)
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -23,10 +25,13 @@ def send(msg):
     client.send(message)
     print(client.recv(2048).decode(format))
 
-send("Hello World")
-input()
-send("Hello Matt")
-input()
-send("Hello Everyone")
-input()
-send(DISCONNECT_MESSAGE)
+username = input("Enter username\n")
+
+while 1:
+    message_to_send = input("enter message to send\n")
+    if message_to_send == disconnect:
+        send(disconnect)
+        break
+    else: 
+        send(f"{username}: {message_to_send}")
+
