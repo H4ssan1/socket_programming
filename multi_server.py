@@ -21,6 +21,7 @@ def client_handler(con, addr):
     print(f"New connection {addr} connected.")
     connected = True
     while connected:
+        
         msg_length = con.recv(HEADER).decode(format)
         if msg_length:
             msg_length = int(msg_length)
@@ -50,6 +51,7 @@ def start():
         thread = threading.Thread(target=client_handler, args=(conn, addr))
         thread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
+        print(f"conn = {conn} and addr = {addr}")
         
 
 print("[STARTING] server is starting...")

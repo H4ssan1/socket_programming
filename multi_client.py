@@ -33,5 +33,5 @@ while 1:
         send(disconnect)
         break
     else: 
-        send(f"{username}: {message_to_send}")
+        send(message_to_send)
 
