@@ -1,13 +1,12 @@
 import socket
-
+import select
+import sys
 
 port = 12000
 header = 64
 format = 'UTF-8'
 disconnect = "!break"
-name = "john"
-# Whatever IP address you found from running ifconfig in terminal.
-# SERVER = ""
+
 ip = "192.168.0.72"
 message_to_send = ""
 
@@ -25,13 +24,22 @@ def send(msg):
     client.send(message)
     print(client.recv(2048).decode(format))
 
-username = input("Enter username\n")
+while True:
+    # Check if there's data to be received
+    ready_to_read, _, _ = select.select([client], [], [], 0)
+    for sock in ready_to_read:
+        if sock == client:
+            message_received = client.recv(2048).decode(format)
+            if message_received:
+                print(message_received)
+    
+    # Check for user input
+    message_to_send = input("Enter message to send (type '!break' to exit): ")
 
-while 1:
-    message_to_send = input("enter message to send\n")
-    if message_to_send == disconnect:
-        send(disconnect)
-        break
-    else: 
-        send(message_to_send)
-
+    # Send user input if available
+    if message_to_send:
+        if message_to_send == disconnect:
+            send(disconnect)
+            sys.exit()  # Exit the program
+        else:
+            send(message_to_send)
