@@ -1,6 +1,7 @@
 import socket
 import select
 import time
+import sys
 
 port_no = 12000
 HEADER = 64
@@ -18,7 +19,7 @@ def server_running():
         ready_to_read, _, _ = select.select([server], [], [], 30)
         if not ready_to_read: 
             print("Nothing has been received for 30 seconds. Exiting...")
-            break
+            sys.exit()  # Exit the program
         for sock in ready_to_read:
             if sock == server:
                 message_received = server.recv(2048).decode(format)
@@ -40,22 +41,22 @@ def process_algorithms(algorithm):
             second_num += numerical
     
     if operation == "+":
-        calculated_operation = int(first_num) + int(second_num)
+        calculated_operation = round(int(first_num) + int(second_num),3)
         time.sleep(10)
         send_to_client(str(calculated_operation))
 
     elif operation == "-":
-        calculated_operation = int(first_num) - int(second_num)
+        calculated_operation = round(int(first_num) - int(second_num),3)
         time.sleep(10)
         send_to_client(str(calculated_operation))
 
     elif operation == "*":
-        calculated_operation = int(first_num) * int(second_num)
+        calculated_operation = round(int(first_num) * int(second_num),3)
         time.sleep(10)
         send_to_client(str(calculated_operation))
 
     elif operation == "/":
-        calculated_operation = int(first_num) / int(second_num)
+        calculated_operation = round(int(first_num) / int(second_num),3)
         time.sleep(10)
         send_to_client(str(calculated_operation))
 
@@ -66,10 +67,6 @@ def process_algorithms(algorithm):
 
 def send_to_client(result):
     message = result.encode(format)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(format)
-    send_length += b' ' * (HEADER - len(send_length))
-    server.send(send_length)
     server.send(message)
 
 server_running()
