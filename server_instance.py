@@ -19,6 +19,7 @@ def server_running():
         ready_to_read, _, _ = select.select([server], [], [], 30)
         if not ready_to_read: 
             print("Nothing has been received for 30 seconds. Exiting...")
+            server.close()
             sys.exit()  # Exit the program
         for sock in ready_to_read:
             if sock == server:

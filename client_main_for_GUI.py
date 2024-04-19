@@ -4,13 +4,16 @@ import select
 import sys
 import time
 import json
+import client_main_GUI as gui
+
+
 
 port_no = 12000
 HEADER = 64
 host_IP = "192.168.0.72"
 ADDR = (host_IP, port_no)
-print("Intelligent Job Scheduler")
-print(f"Client IP: {host_IP}")
+
+
 
 DISCONNECT_MESSAGE = "!BREAK"
 format = 'UTF-8'
@@ -20,6 +23,8 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 server_connections = {} ##dictionary to store server connections
+
+
 
 def server_handler(conn, addr):
     print(f"NEW CONNECTION {addr} CONNECTED")
@@ -38,8 +43,7 @@ def server_handler(conn, addr):
                 try:
                     usage_info = json.loads(data.decode(format))
                     # If decoding succeeds, it's JSON data
-                    print(f"\n[{addr}]:")
-                    print(usage_info)
+                    print(f"[{addr}]:{usage_info}")
                 except json.JSONDecodeError:
                     # Process the received data
                     msg = data.decode(format)
@@ -90,8 +94,18 @@ def start_usage_info_thread():
         usage_info_thread.daemon = True  #set the thread as a daemon so it exits when the main thread exits
         usage_info_thread.start()
 
+def init_gui():
+    gui.__init__()
+
+def run_gui_thread():
+    gui_thread = threading.Thread(target=init_gui)
+    gui_thread.start()
+
+
+
 def start():
     server.listen()
+    
     print(f"[LISTENING] Client is listening on {host_IP}")
     
     while True:
@@ -116,7 +130,9 @@ def start():
                 
     server.close()
 
+run_gui_thread()
+gui.programs_incoming_messages("Intelligent Job Scheduler")
+print(f"Client IP: {host_IP}")
 print("[STARTING] server is starting...")
-
 start()
 
