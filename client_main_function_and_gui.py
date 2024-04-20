@@ -77,7 +77,7 @@ def start_usage_info_thread():
     global usage_info_thread
     if not usage_info_thread or not usage_info_thread.is_alive():
         usage_info_thread = threading.Thread(target=request_usage_info)
-        #usage_info_thread.daemon = True  # set the thread as a daemon so it exits when the main thread exits
+        usage_info_thread.daemon = True  # set the thread as a daemon so it exits when the main thread exits
         usage_info_thread.start()
 
 def start():
