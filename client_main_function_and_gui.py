@@ -17,7 +17,6 @@ usage_info_thread = None
 
 
 
-
 server_connections = {}  # dictionary to store server connections
 devices_usage_info = {}  # dictionary to store devices' usage info
 
@@ -73,7 +72,6 @@ def send_to_server(server_addr, message):
         server_conn.send(message.encode(format))
     else:
         programs_incoming_messages("server not found.")
-
 
 def start_usage_info_thread():
     global usage_info_thread
@@ -195,11 +193,8 @@ send_message_to_server_button = tkinter.Button(button_frame, text="Message a ser
 send_message_to_server_button.pack(side=tkinter.LEFT, padx=5)
 
 
-
-
 programs_incoming_messages("Intelligent Job Scheduler")
 programs_incoming_messages(f"Client IP: {host_IP}")
 programs_incoming_messages("[STARTING] server is starting...")
 
 client_GUI.mainloop()
-
