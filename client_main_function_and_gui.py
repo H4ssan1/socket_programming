@@ -15,10 +15,11 @@ DISCONNECT_MESSAGE = "!BREAK"
 format = 'UTF-8'
 usage_info_thread = None
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(ADDR)
+
+
 
 server_connections = {}  # dictionary to store server connections
+devices_usage_info = {}  # dictionary to store devices' usage info
 
 def server_handler(conn, addr):
     programs_incoming_messages(f"NEW CONNECTION {addr} CONNECTED")
@@ -33,16 +34,13 @@ def server_handler(conn, addr):
                 programs_incoming_messages(f"Connection closed by server {addr}")
                 break
             else:
-                # Try decoding the received data as JSON
-                try:
-                    usage_info = json.loads(data.decode(format))
-                    # If decoding succeeds, it's JSON data
-                    devices_incoming_text(f"\n[{addr}]:{usage_info}")
-                except json.JSONDecodeError:
-                    # Process the received data
+                 # Check if the received data starts with the usage info prefix
+                if data.startswith(b"USAGE_INFO:"):
+                    usage_info = json.loads(data[len("USAGE_INFO:"):].decode(format))
+                    devices_usage_info[addr] = usage_info
+                else:
+                    # Process the received data as a regular message
                     msg = data.decode(format)
-                    if msg == DISCONNECT_MESSAGE:
-                        connected = False
                     server_incoming_messages(f"\n[{addr}] {msg}")
         except ConnectionResetError:
             # Connection reset by the server
@@ -52,18 +50,22 @@ def server_handler(conn, addr):
     conn.close()
     # Remove the connection from the dictionary when it's closed
     del server_connections[addr]
+    del devices_usage_info[addr]
 
-def request_usage_info():
+def request_usage_info():   
     while True:
         for address in server_connections:
             send_to_server(address, "usage info")
-        time.sleep(30)
-
-def display_connections():
-    server_addresses = ', '.join([str(addr) for addr in server_connections.keys()])
+        display_devices()
+        time.sleep(3)
+        
+def display_devices():
     devices_text_area.delete('1.0', tkinter.END)  # Clear existing content
-    devices_text_area.insert(tkinter.END, server_addresses)
-
+    for i, (address, pc_usage_info) in enumerate(devices_usage_info.items()):
+        devices_text_area.insert(tkinter.END, f"Device {i + 1}\n")
+        devices_text_area.insert(tkinter.END, f"IP: {address[0]}\nPort:{address[1]}\n")
+        formatted_usage_data = "\n".join([f"{key}: {value}" for key, value in pc_usage_info.items()])
+        devices_text_area.insert(tkinter.END, f"{formatted_usage_data}\n\n")
 
 def send_to_server(server_addr, message):
     if server_addr in server_connections:
@@ -72,39 +74,32 @@ def send_to_server(server_addr, message):
     else:
         programs_incoming_messages("server not found.")
 
-def if_send_to_server():
-    server_input = input("Would you like to send a message to a server? (y/n)\n")
-    if server_input == "y":
-        server_IP = input("enter IP of server\n")
-        server_port = int(input("enter port of server\n"))
-        server_address = (server_IP, server_port)
-        message_to_send = input("Enter calculation to send\n")
-        send_to_server(server_address, message_to_send)
 
 def start_usage_info_thread():
     global usage_info_thread
     if not usage_info_thread or not usage_info_thread.is_alive():
         usage_info_thread = threading.Thread(target=request_usage_info)
-        usage_info_thread.daemon = True  # set the thread as a daemon so it exits when the main thread exits
+        #usage_info_thread.daemon = True  # set the thread as a daemon so it exits when the main thread exits
         usage_info_thread.start()
 
 def start():
-
-    server.listen()
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.bind(ADDR)
+    client.listen()
     programs_incoming_messages(f"[LISTENING] Client is listening on {host_IP}")
 
     while True:
-        conn, addr = server.accept()
+        conn, addr = client.accept()
         server_connections[addr] = conn
         thread = threading.Thread(target=server_handler, args=(conn, addr))
         thread.start()
         start_usage_info_thread()
-        display_connections()
         programs_incoming_messages(f"[ACTIVE CONNECTIONS] {len(server_connections)}")
 
 def start_server_thread():
     server_thread = threading.Thread(target=start)
     server_thread.start()
+    start_button.pack_forget()
 
 ################################################################
 # GUI Functions
@@ -124,6 +119,16 @@ def server_incoming_messages(text):
 def message_server():
     new_window = tkinter.Toplevel(client_GUI)
     new_window.title("Message a server")
+
+    main_width = client_GUI.winfo_width()
+    main_height = client_GUI.winfo_height()
+
+    # Calculate the x and y coordinates for the center of the main window
+    x = client_GUI.winfo_rootx() + main_width // 2 - 70
+    y = client_GUI.winfo_rooty() + main_height // 2 - 70
+
+    # Set the position of the new window to be centered relative to the main window
+    new_window.geometry(f"260x190+{x}+{y}")
 
     frame = tkinter.Frame(new_window)
     frame.pack(padx=10, pady=10)
@@ -155,6 +160,9 @@ def message_server():
 client_GUI = tkinter.Tk()
 client_GUI.title("Intelligent Job Scheduler")
 
+button_frame = tkinter.Frame(client_GUI)
+button_frame.pack(anchor='nw', padx=10, pady=10)
+
 frame1 = tkinter.Frame(client_GUI)
 frame1.pack(side=tkinter.LEFT, padx=10, pady=10)
 
@@ -164,27 +172,29 @@ frame2.pack(side=tkinter.LEFT, padx=10, pady=10)
 devices_label = tkinter.Label(frame1, text="Devices")
 devices_label.pack(anchor=tkinter.W)
 
-devices_text_area = tkinter.Text(frame1, height=22, width=80)
+devices_text_area = tkinter.Text(frame1, height=42, width=140)
+
 devices_text_area.pack(pady=5)
 
 program_messages_label = tkinter.Label(frame2, text="Program messages")
 program_messages_label.pack(anchor=tkinter.W)
 
-program_text_area = tkinter.Text(frame2, height=10, width=40)
+program_text_area = tkinter.Text(frame2, height=20, width=80)
 program_text_area.pack(pady=5)
 
 server_messages_label = tkinter.Label(frame2, text="Server messages")
 server_messages_label.pack(anchor=tkinter.W)
 
-server_text_area = tkinter.Text(frame2, height=10, width=40)
+server_text_area = tkinter.Text(frame2, height=20, width=80)
 server_text_area.pack(pady=5)
 
+start_button = tkinter.Button(button_frame, text="Start Program", command=start_server_thread)
+start_button.pack(side=tkinter.LEFT, padx=5)
 
-send_message_to_server_button = tkinter.Button(client_GUI, text="Message a server", command=message_server)
-send_message_to_server_button.pack(pady=10)
+send_message_to_server_button = tkinter.Button(button_frame, text="Message a server", command=message_server)
+send_message_to_server_button.pack(side=tkinter.LEFT, padx=5)
 
-start_button = tkinter.Button(client_GUI, text="Start", command=start_server_thread)
-start_button.pack(pady=10)
+
 
 
 programs_incoming_messages("Intelligent Job Scheduler")

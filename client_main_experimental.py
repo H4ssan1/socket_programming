@@ -112,7 +112,7 @@ def start():
             print("No connections. Closing server...")
             break
 
-        #if_send_to_server()
+        if_send_to_server()
                 
     server.close()
 

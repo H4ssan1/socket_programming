@@ -28,7 +28,7 @@ def server_running():
                 message_received = server.recv(2048).decode(format)
                 if message_received == "usage info":
                     system_info = get_system_info()
-                    server.sendall(json.dumps(system_info).encode())
+                    server.sendall(("USAGE_INFO:" + json.dumps(system_info)).encode(format))
                 else: 
                     print(f"Algorithm sent from client ({ADDR}): {message_received}")
                     process_algorithms(message_received)
@@ -79,7 +79,7 @@ def process_algorithms(algorithm):
         send_to_client("Resend calculation. No operation was found")
 
 def send_to_client(result):
-    time.sleep(10)
+    #time.sleep(10)
     message = result.encode(format)
     server.send(message)
 
