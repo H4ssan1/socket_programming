@@ -14,8 +14,10 @@ ADDR = (host_IP, port_no)
 DISCONNECT_MESSAGE = "!BREAK"
 format = 'UTF-8'
 usage_info_thread = None
+main_thread_ending = threading.Event()
 
-
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.bind(ADDR)
 
 server_connections = {}  # dictionary to store server connections
 devices_usage_info = {}  # dictionary to store devices' usage info
@@ -40,10 +42,13 @@ def server_handler(conn, addr):
                 else:
                     # Process the received data as a regular message
                     msg = data.decode(format)
-                    server_incoming_messages(f"\n[{addr}] {msg}")
+                    server_incoming_messages(f"Message from server{addr}: {msg}\n")
         except ConnectionResetError:
             # Connection reset by the server
             programs_incoming_messages(f"Connection reset by server {addr}")
+            break
+        if main_thread_ending.is_set():
+            programs_incoming_messages("Main thread is ending. Closing connection.")
             break
 
     conn.close()
@@ -51,13 +56,13 @@ def server_handler(conn, addr):
     del server_connections[addr]
     del devices_usage_info[addr]
 
-def request_usage_info():   
+def request_usage_info():
     while True:
         for address in server_connections:
             send_to_server(address, "usage info")
         display_devices()
-        time.sleep(3)
-        
+        time.sleep(1)
+
 def display_devices():
     devices_text_area.delete('1.0', tkinter.END)  # Clear existing content
     for i, (address, pc_usage_info) in enumerate(devices_usage_info.items()):
@@ -81,8 +86,7 @@ def start_usage_info_thread():
         usage_info_thread.start()
 
 def start():
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.bind(ADDR)
+
     client.listen()
     programs_incoming_messages(f"[LISTENING] Client is listening on {host_IP}")
 
@@ -114,6 +118,14 @@ def server_incoming_messages(text):
     server_text_area.insert(tkinter.END, text + "\n")
     server_text_area.see(tkinter.END)
 
+def on_closing():
+    # Set the main_thread_ending event before closing the GUI
+    main_thread_ending.set()
+    
+    client.close()
+    client_GUI.destroy()
+    sys.exit()
+
 def message_server():
     new_window = tkinter.Toplevel(client_GUI)
     new_window.title("Message a server")
@@ -126,24 +138,47 @@ def message_server():
     y = client_GUI.winfo_rooty() + main_height // 2 - 70
 
     # Set the position of the new window to be centered relative to the main window
-    new_window.geometry(f"260x190+{x}+{y}")
+    new_window.geometry(f"260x200+{x}+{y}")
 
     frame = tkinter.Frame(new_window)
     frame.pack(padx=10, pady=10)
 
+    #get available IPs and ports from devices_usage_info
+    ips = [addr[0] for addr in devices_usage_info.keys()]
+    ports = [str(addr[1]) for addr in devices_usage_info.keys()]
+
     tkinter.Label(frame, text='IP').grid(sticky="W")
-    ip_entry = tkinter.Entry(frame)
-    ip_entry.grid(sticky="W")
-    tkinter.Label(frame, text='Port').grid(sticky="W")
-    port_entry = tkinter.Entry(frame)
-    port_entry.grid(sticky="W")
+    if not devices_usage_info:  # Check if devices_usage_info is empty
+        # If empty, create entry boxes for IP and port without dropdown menus
+        ip_entry = tkinter.Entry(frame)
+        ip_entry.grid(sticky="W")
+
+        tkinter.Label(frame, text='Port').grid(sticky="W")
+        port_entry = tkinter.Entry(frame)
+        port_entry.grid(sticky="W")
+    else:
+        # Get available IPs and ports from devices_usage_info
+        ips = [addr[0] for addr in devices_usage_info.keys()]
+        ports = [str(addr[1]) for addr in devices_usage_info.keys()]
+
+        selected_ip = tkinter.StringVar(new_window)
+        selected_ip.set(ips[0] if ips else '')  # Set the default value if available, else set to empty string
+        ip_dropdown = tkinter.OptionMenu(frame, selected_ip, *ips)
+        ip_dropdown.grid(sticky="W")
+
+        tkinter.Label(frame, text='Port').grid(sticky="W")
+        selected_port = tkinter.StringVar(new_window)
+        selected_port.set(ports[0] if ports else '')  # Set the default value if available, else set to empty string
+        port_dropdown = tkinter.OptionMenu(frame, selected_port, *ports)
+        port_dropdown.grid(sticky="W")
+
     tkinter.Label(frame, text='Message').grid(sticky="W")
     message_entry = tkinter.Entry(frame)
     message_entry.grid(sticky="W")
     
     def submit_button():
-        sending_ip = ip_entry.get()
-        sending_port = int(port_entry.get())
+        sending_ip = selected_ip.get()
+        sending_port = int(selected_port.get())
         sending_message = message_entry.get()
         server_address = (sending_ip, sending_port)
         send_to_server(server_address, sending_message)
@@ -157,6 +192,8 @@ def message_server():
 
 client_GUI = tkinter.Tk()
 client_GUI.title("Intelligent Job Scheduler")
+
+client_GUI.protocol("WM_DELETE_WINDOW", on_closing)
 
 button_frame = tkinter.Frame(client_GUI)
 button_frame.pack(anchor='nw', padx=10, pady=10)
