@@ -50,10 +50,10 @@ def get_system_info():
     total_memory_gb = round(memory.total / (1024 ** 3), 1)  #convert bytes to gigabytes and round to 1 decimal place
     available_memory_gb = round(memory.available / (1024 ** 3), 1)
     return {
-        "cpu_usage": f"{psutil.cpu_percent(interval=1)}%",
-        "memory_usage": f"{memory.percent}%",
-        "memory_total": f"{total_memory_gb}GB",
-        "memory_available": f"{available_memory_gb}GB",
+        "CPU usage": f"{psutil.cpu_percent(interval=1)}%",
+        "Memory usage": f"{memory.percent}%",
+        "Memory total": f"{total_memory_gb}GB",
+        "Memory available": f"{available_memory_gb}GB",
         "Status": status,
         "Tasks": tasks
     }
@@ -95,7 +95,7 @@ def process_algorithms(algorithm):
         send_to_client("Resend calculation. No operation was found")
 
     if operation_found == True:
-        time.sleep(30)
+        time.sleep(15)
         tasks -= 1
         send_to_client(F"{algorithm} = {str(calculated_operation)}")
         if tasks == 0:

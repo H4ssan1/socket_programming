@@ -15,8 +15,7 @@ format = 'UTF-8'
 usage_info_thread = None
 main_thread_ending = threading.Event()
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.bind(ADDR)
+
 
 server_connections = {}  # dictionary to store server connections
 devices_usage_info = {}  # dictionary to store devices' usage info
@@ -85,7 +84,8 @@ def start_usage_info_thread():
         usage_info_thread.start()
 
 def start():
-
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.bind(ADDR)
     client.listen()
     programs_incoming_messages(f"[LISTENING] Client is listening on {host_IP}")
 
