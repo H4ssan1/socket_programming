@@ -1,3 +1,4 @@
+#####Imported various libraries for use within my project
 import socket
 import threading
 import sys
@@ -5,23 +6,23 @@ import time
 import json
 import tkinter
 
-port_no = 12000
-HEADER = 64
-host_IP = "192.168.0.72"
-ADDR = (host_IP, port_no)
+port_no = 12000 # port number for servers to connect to
+HEADER = 64 # header space
+host_IP = "192.168.0.72" # host ip for socket to binded to
+ADDR = (host_IP, port_no) 
 
 DISCONNECT_MESSAGE = "!BREAK"
-format = 'UTF-8'
-usage_info_thread = None
-main_thread_ending = threading.Event()
+format = 'UTF-8' # encoding format for messages to be sent out
+usage_info_thread = None 
+main_thread_ending = threading.Event() # flag to halt all threads if main closes
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.bind(ADDR)
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # creation of TCP socket
+client.bind(ADDR) # binding address to socket so that servers has reference to connect to it
 
 server_connections = {}  # dictionary to store server connections
 devices_usage_info = {}  # dictionary to store devices' usage info
 
-def server_handler(conn, addr):
+def server_handler(conn, addr): # deals with different server connections, including receiving messages
     programs_incoming_messages(f"NEW CONNECTION {addr} CONNECTED")
     connected = True
 
