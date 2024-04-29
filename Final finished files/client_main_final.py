@@ -8,7 +8,7 @@ import tkinter
 
 port_no = 12000 # port number for servers to connect to
 HEADER = 64 # header space
-host_IP = "192.168.0.72" # host ip for socket to binded to
+host_IP = "" # REPLACE THIS WITH host ip for socket to be binded to
 ADDR = (host_IP, port_no) 
 
 format = 'UTF-8' # encoding format for messages to be sent out
